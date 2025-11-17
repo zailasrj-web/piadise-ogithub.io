@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EIAO Celulares</title>
+ 
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+ 
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+ 
+  <style>
+    body { font-family: Arial, sans-serif; background:#f2f2f2; margin:0; padding:0; }
+    .navbar-brand { color:#ff9900 !important; font-weight:700; font-size:1.4rem; }
+    .search-input { width:100%; max-width:720px; }
+ 
+    /* Cards */
+    .card { transition: transform .25s ease, box-shadow .25s ease; border-radius:10px; }
+    .card:hover { transform:translateY(-6px); box-shadow:0 10px 25px rgba(0,0,0,0.12); }
+    .card img { height:220px; object-fit:contain; transition:transform .25s ease; }
+    .card img:hover { transform:scale(1.03); }
+ 
+    /* carrito sidebar */
+    #carrito-sidebar { position:sticky; top:20px; background:white; border-radius:10px; padding:15px; }
+    @media(max-width:992px){ #carrito-sidebar{position:static;margin-top:20px;} }
+ 
+    /* modal animation */
+    .modal-content { animation: popIn .28s ease; }
+    @keyframes popIn { from { transform:scale(.95); opacity:0 } to { transform:scale(1); opacity:1 } }
+ 
+    /* toast */
+    .toast-custom { animation: fadeInOut 2s ease forwards; position:fixed; right:20px; top:20px; z-index:2200; background:#4caf50; color:#fff; padding:12px 16px; border-radius:8px; font-weight:600; }
+    @keyframes fadeInOut { 0%{opacity:0;transform:translateY(-10px)}10%{opacity:1;transform:translateY(0)}90%{opacity:1}100%{opacity:0;transform:translateY(-10px)} }
+  </style>
+</head>
+<body>
+ 
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-dark" style="background:#131921;">
+    <div class="container-fluid d-flex align-items-center">
+      <a class="navbar-brand">EIAO CEL</a>
+ 
+      <form class="d-flex mx-auto w-50" onsubmit="event.preventDefault(); buscar();">
+        <input id="searchInput" class="form-control search-input rounded-start" type="search" placeholder="Buscar productos...">
+        <button class="btn btn-warning rounded-end ms-2" type="button" onclick="buscar()">Buscar</button>
+      </form>
+ 
+      <div class="d-flex align-items-center">
+        <a class="nav-link text-white me-3" href="#" onclick="mostrarHistorial()">Pedidos</a>
+ 
+        <div class="position-relative text-white fs-4" role="button" onclick="toggleCarritoVisible()">
+          🛒
+          <span id="cart-count" class="badge bg-warning text-dark position-absolute top-0 start-100 translate-middle">0</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+ 
+  <!-- CATEGORÍAS -->
+  <div class="container my-3">
+    <div class="d-flex flex-wrap gap-2 p-3 bg-white shadow-sm rounded">
+      <button class="btn btn-outline-secondary categoria-btn active" onclick="filtrarCategoria('todos', event)">Todos</button>
+      <button class="btn btn-outline-secondary categoria-btn" onclick="filtrarCategoria('tope', event)">Tope de Gama</button>
+      <button class="btn btn-outline-secondary categoria-btn" onclick="filtrarCategoria('media', event)">Gama Media</button>
+      <button class="btn btn-outline-secondary categoria-btn" onclick="filtrarCategoria('baja', event)">Gama Baja</button>
+    </div>
+  </div>
+ 
+  <!-- CATÁLOGO + CARRITO -->
+  <div class="container my-4">
+    <div class="row">
+      <!-- Catálogo -->
+      <div class="col-lg-9">
+        <div id="catalogo" class="row g-3"></div>
+      </div>
+ 
+      <!-- Carrito visible (side) -->
+      <div class="col-lg-3">
+        <div class="card shadow-sm" id="carrito-sidebar">
+          <div class="card-body">
+            <h5 class="card-title">🛒 Mi Carrito</h5>
+            <hr>
+            <div id="lista-carrito"></div>
+            <div id="carrito-empty" class="text-center text-muted">El carrito está vacío</div>
+            <h5 id="total" class="mt-3 fw-bold">Total: $0 MXN</h5>
+            <button class="btn btn-warning w-100 mt-3" onclick="procederAlPago()">Proceder al Pago</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- MODAL ESPECIFICACIONES -->
+  <div class="modal fade" id="modalEspecs" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-titulo"></h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center">
+          <img id="modal-imagen" class="img-fluid mb-3 rounded" style="max-width:200px;">
+          <p id="modal-precio" class="text-danger fw-bold fs-4"></p>
+          <ul id="modal-especs" class="list-group text-start"></ul>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-warning" onclick="agregarDesdeModal()">Agregar al Carrito</button>
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- MODAL HISTORIAL -->
+  <div class="modal fade" id="modalHistorial" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Historial de Tickets</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="historial-body"></div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- carrito overlay (mobile) -->
+  <div id="carritoOverlay" style="display:none; position:fixed; right:20px; top:80px; width:320px; z-index:2100;"></div>
+ 
+  <footer class="bg-dark text-white py-4 mt-5">
+    <div class="container text-center">
+      <h4 class="text-warning">Contacto</h4>
+      <p> Numero de contacto: +51 55 1234 5678</p>
+      <p>Correo Electronico: soporte@eiaocel.com</p>
+      <p>Ubicacion: Av. Insurgentes Sur 123, Monterrey, México</p>
+      <hr class="border-secondary">
+      <small>&copy; 2025 EIAO Celulares</small>
+    </div>
+  </footer>
+ 
+<script>
+/* -- DATOS INICIALES -- */
+let celulares = [];
+let carrito = [];
+let celularActual = null;
+let categoriaActual = 'todos';
+let folio = Number(localStorage.getItem('folio')) || 1000;
+ 
+/* Inicializa productos */
+function initProductos(){
+  celulares = [
+    {
+      id:"realme_gt6",
+      nombre:"SEBAS ES PUTOOOOOOO ME LA CHUPA EL SEBAS6",
+      precio:13999,
+      imagen:"41LEZe3YlsL.webp",
+      categoria:"Realme",
+      marca:"Realme",
+      specs:[
+        "Pantalla: 6.78\" AMOLED 120Hz",
+        "Procesador: Snapdragon 8s Gen 3",
+        "RAM: 12 GB",
+        "Almacenamiento: 256 GB",
+        "Batería: 5500 mAh"
+      ]
+    },
+    {
+      id:"oneplus_12",
+      nombre:"OnePlus 12",
+      precio:15999,
+      imagen:"OnePlus-12-1-4-300x300.webp",
+      categoria:"media",
+      marca:"OnePlus",
+      specs:[
+        "Pantalla: 6.82\" AMOLED 120Hz",
+        "Procesador: Snapdragon 8 Gen 3",
+        "RAM: 16 GB",
+        "Almacenamiento: 512 GB",
+        "Batería: 5400 mAh"
+      ]
+    },
+    {
+      id:"sony_xperia_5v",
+      nombre:"Sony Xperia 5 V",
+      precio:21499,
+      imagen:"5e7e3c65-45ed-4887-a02c-9057ffaf2fe3-1_7cae4c94-51de-4415-8f73-5fd06a7d158a.webp",
+      categoria:"tope",
+      marca:"Sony",
+      specs:[
+        "Pantalla: 6.1\" OLED 120Hz",
+        "Procesador: Snapdragon 8 Gen 2",
+        "RAM: 8 GB",
+        "Almacenamiento: 256 GB",
+        "Batería: 5000 mAh"
+      ]
+    },
+    {
+      id:"honor_magic_pro",
+      nombre:"Honor Magic Pro",
+      precio:19499,
+      imagen:"71000169_66753cb6-f243-4e7b-a51d-37ec604bedef_500x@2x.webp",
+      categoria:"media",
+      marca:"Honor",
+      specs:[
+        "Pantalla: 6.8\" OLED 120Hz",
+        "Procesador: Snapdragon 8 Gen 3",
+        "RAM: 12 GB",
+        "Almacenamiento: 512 GB",
+        "Batería: 5600 mAh"
+      ]
+    },
+    {
+      id:"oppo_find_x7",
+      nombre:"Oppo Find X7 Pro",
+      precio:23999,
+      imagen:"oppo-find-x7-pro-viettablet.webp",
+      categoria:"tope",
+      marca:"Oppo",
+      specs:[
+        "Pantalla: 6.82\" AMOLED 120Hz",
+        "Procesador: Snapdragon 8 Gen 3",
+        "RAM: 16 GB",
+        "Almacenamiento: 512 GB",
+        "Batería: 5400 mAh"
+      ]
+    }
+  ];
+}
+ 
+/* -- RENDER CATÁLOGO -- */
+function cargarCatalogo(){
+  const catalogo = document.getElementById('catalogo');
+  catalogo.innerHTML = '';
+  let filtrados = categoriaActual === 'todos' ? celulares : celulares.filter(c => c.categoria===categoriaActual || c.marca===categoriaActual);
+ 
+  filtrados.forEach(cel => {
+    const cardHTML = `
+      <div class="col-md-4">
+        <div class="card p-2 shadow-sm h-100">
+          <img src="${cel.imagen}" class="card-img-top" alt="${cel.nombre}" onerror="this.src='https://via.placeholder.com/400x300?text=${encodeURIComponent(cel.nombre)}'">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title">${cel.nombre}</h5>
+            <p class="text-danger fw-bold">$${cel.precio.toLocaleString()} MXN</p>
+            <div class="mt-auto">
+              <button class="btn btn-primary btn-sm me-2" onclick="verEspecificaciones('${cel.id}')">Especificaciones</button>
+              <button class="btn btn-warning btn-sm" onclick="agregarAlCarrito('${cel.id}')">Agregar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    catalogo.insertAdjacentHTML('beforeend', cardHTML);
+  });
+}
+ 
+/* -- FILTRADO OSEA BUSCAR CELULAR -- */
+function filtrarCategoria(cat, ev){
+  categoriaActual = cat;
+  if(ev && ev.target){
+    document.querySelectorAll('.categoria-btn').forEach(b=>b.classList.remove('active'));
+    ev.target.classList.add('active');
+  }
+  cargarCatalogo();
+}
+function buscar(){
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  if(!q){ categoriaActual='todos'; cargarCatalogo(); return; }
+  const results = celulares.filter(c=>c.nombre.toLowerCase().includes(q));
+  const catalogo = document.getElementById('catalogo'); catalogo.innerHTML='';
+  results.forEach(cel=>{
+    const cardHTML = `
+      <div class="col-md-4">
+        <div class="card p-2 shadow-sm h-100">
+          <img src="${cel.imagen}" class="card-img-top" alt="${cel.nombre}" onerror="this.src='https://via.placeholder.com/400x300?text=${encodeURIComponent(cel.nombre)}'">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title">${cel.nombre}</h5>
+            <p class="text-danger fw-bold">$${cel.precio.toLocaleString()} MXN</p>
+            <div class="mt-auto">
+              <button class="btn btn-primary btn-sm me-2" onclick="verEspecificaciones('${cel.id}')">Especificaciones</button>
+              <button class="btn btn-warning btn-sm" onclick="agregarAlCarrito('${cel.id}')">Agregar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    catalogo.insertAdjacentHTML('beforeend', cardHTML);
+  });
+}
+ 
+/* -- MODAL ESPECIFICACIONES DEL CELULAR -- */
+function verEspecificaciones(id){
+  console.log('verEspecificaciones click:', id); // debug
+  const cel = celulares.find(c=>c.id===id); if(!cel) return;
+  celularActual = cel;
+  document.getElementById('modal-titulo').textContent = cel.nombre;
+  document.getElementById('modal-imagen').src = cel.imagen;
+  document.getElementById('modal-precio').textContent = `$${cel.precio.toLocaleString()} MXN`;
+  const lista = document.getElementById('modal-especs'); lista.innerHTML = '';
+  cel.specs.forEach(s=>{ const li=document.createElement('li'); li.className='list-group-item'; li.textContent=s; lista.appendChild(li); });
+  new bootstrap.Modal(document.getElementById('modalEspecs')).show();
+}
+function agregarDesdeModal(){ if(celularActual) agregarAlCarrito(celularActual.id); const m=bootstrap.Modal.getInstance(document.getElementById('modalEspecs')); if(m) m.hide(); }
+ 
+/* -- CARRITO DEL AMAZON -- */
+function agregarAlCarrito(id){
+  const cel = celulares.find(c=>c.id===id); if(!cel) return;
+  const existing = carrito.find(i=>i.id===id);
+  if(existing) existing.quantity++;
+  else carrito.push({...cel, quantity:1});
+  actualizarCarrito();
+  guardarCarritoLocal();
+  mostrarToast(`${cel.nombre} agregado al carrito`);
+}
+function actualizarCarrito(){
+  const lista = document.getElementById('lista-carrito');
+  const totalEl = document.getElementById('total');
+  const cartCount = document.getElementById('cart-count');
+  const empty = document.getElementById('carrito-empty');
+  if(carrito.length===0){
+    lista.innerHTML=''; empty.style.display='block'; totalEl.textContent='Total: $0 MXN'; cartCount.textContent='0'; return;
+  }
+  empty.style.display='none';
+  let html='', total=0, items=0;
+  carrito.forEach((it,idx)=>{
+    const subtotal = it.precio * it.quantity; total += subtotal; items += it.quantity;
+    html += `
+      <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+        <div><strong>${it.nombre}</strong><br><small>$${it.precio.toLocaleString()} x ${it.quantity}</small></div>
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-sm btn-outline-secondary" onclick="cambiarCantidad(${idx}, -1)">-</button>
+          <span>${it.quantity}</span>
+          <button class="btn btn-sm btn-outline-secondary" onclick="cambiarCantidad(${idx}, 1)">+</button>
+          <button class="btn btn-sm btn-danger" onclick="eliminarDelCarrito(${idx})">X</button>
+        </div>
+      </div>
+    `;
+  });
+  lista.innerHTML = html; totalEl.textContent = `Total: $${total.toLocaleString()} MXN`; cartCount.textContent = items;
+}
+function cambiarCantidad(index,delta){ carrito[index].quantity += delta; if(carrito[index].quantity<=0) carrito.splice(index,1); actualizarCarrito(); guardarCarritoLocal(); }
+function eliminarDelCarrito(index){ carrito.splice(index,1); actualizarCarrito(); guardarCarritoLocal(); }
+function guardarCarritoLocal(){ localStorage.setItem('carrito', JSON.stringify(carrito)); }
+function cargarCarritoLocal(){ const saved = JSON.parse(localStorage.getItem('carrito')); if(Array.isArray(saved)){ carrito=saved; actualizarCarrito(); } }
+ 
+/* -- Mostrar carrito en móvil osea tiene un scroll -- */
+function toggleCarritoVisible(){ const el = document.getElementById('carrito-sidebar'); if(!el) return; el.scrollIntoView({behavior:'smooth',block:'center'}); }
+ 
+/* -- TOAST notificación pequeña y temporal -- */
+function mostrarToast(text){
+  const n = document.createElement('div'); n.className='toast-custom'; n.textContent=text; document.body.appendChild(n);
+  setTimeout(()=>n.remove(),2000);
+}
+ 
+/* -- TICKET PDF -- */
+function procederAlPago(){
+  if(carrito.length===0){ alert('El carrito está vacío. Agrega productos antes de proceder al pago.'); return; }
+  const fecha = new Date(); const folioActual = folio; const fechaStr = fecha.toLocaleString();
+  let total = 0;
+  const productosParaTicket = carrito.map(it=>{ const tot = it.precio*it.quantity; total += tot; return {nombre:it.nombre,cantidad:it.quantity,precio:it.precio,total:tot}; });
+ 
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+ 
+  doc.setFontSize(20); doc.text('EIAO CELULARES', doc.internal.pageSize.getWidth()/2, 18, {align:'center'});
+  doc.setFontSize(12); doc.text(`Folio: ${folioActual}`, 20, 32); doc.text(`Fecha: ${fechaStr}`, 20, 40);
+  doc.setFontSize(14); doc.text('Detalles de compra:', 20, 52);
+  let y=64;
+  productosParaTicket.forEach(p=>{
+    doc.setFontSize(12);
+    doc.text(`${p.nombre}`, 20, y);
+    doc.text(`x${p.cantidad}`, 140, y);
+    doc.text(`$${p.total}`, 170, y);
+    y+=8; if(y>270){ doc.addPage(); y=20; }
+  });
+  doc.setDrawColor(0); doc.line(20, y+4, doc.internal.pageSize.getWidth()-20, y+4);
+  y+=12; doc.setFontSize(14); doc.text(`Total: $${total.toLocaleString()} MXN`, doc.internal.pageSize.getWidth()-20, y, {align:'right'});
+ 
+  // Mensaje de agradecimiento
+  y+=18; doc.setFontSize(14); doc.text('¡Gracias por su compra!', doc.internal.pageSize.getWidth()/2, y, {align:'center'});
+  y+=8; doc.setFontSize(11); doc.text('Esperamos que disfrute su producto.', doc.internal.pageSize.getWidth()/2, y, {align:'center'});
+ 
+  // guardar ticket en LocalStorage
+  const dataUrl = doc.output('datauristring');
+  const ticketObj = { folio:folioActual, fecha:fechaStr, total, pdfDataUrl:dataUrl };
+  const tickets = JSON.parse(localStorage.getItem('tickets')) || []; tickets.push(ticketObj); localStorage.setItem('tickets', JSON.stringify(tickets));
+  doc.save(`ticket_${folioActual}.pdf`);
+  folio++; localStorage.setItem('folio', folio);
+ 
+  // limpiar carrito
+  carrito=[]; guardarCarritoLocal(); actualizarCarrito();
+  mostrarToast('¡Compra realizada y ticket guardado!');
+}
+ 
+/* -- Historial -- */
+function mostrarHistorial(){
+  const body = document.getElementById('historial-body'); body.innerHTML='';
+  const tickets = JSON.parse(localStorage.getItem('tickets')) || [];
+  if(tickets.length===0){ body.innerHTML = '<p class="text-center text-muted">No hay tickets guardados.</p>'; }
+  else{
+    tickets.slice().reverse().forEach(t=>{
+      const div = document.createElement('div'); div.className='border p-2 mb-2';
+      div.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <strong>Folio: ${t.folio}</strong><br><small>${t.fecha}</small><br><small>Total: $${Number(t.total).toLocaleString()} MXN</small>
+          </div>
+          <div class="text-end">
+            <button class="btn btn-sm btn-primary mb-1" onclick="downloadDataUrl('${t.pdfDataUrl}','ticket_${t.folio}.pdf')">Descargar PDF</button>
+          </div>
+        </div>
+      `;
+      body.appendChild(div);
+    });
+  }
+  new bootstrap.Modal(document.getElementById('modalHistorial')).show();
+}
+function downloadDataUrl(dataUrl, filename){ const a=document.createElement('a'); a.href=dataUrl; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); }
+ 
+/* -- INIT -- */
+function init(){
+  initProductos();
+  cargarCatalogo();
+  cargarCarritoLocal();
+}
+init();
+ 
+</script>
+</body>
+</html>
