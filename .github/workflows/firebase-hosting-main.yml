@@ -1,12 +1,11 @@
-name: Deploy to Firebase Hosting
+name: Deploy to Firebase Hosting on push to main
 
-# Se dispara al hacer push al branch main
+# Se ejecuta cuando haces push a main
 on:
   push:
     branches:
       - main
 
-# Permisos necesarios
 permissions:
   contents: read
   checks: write
@@ -16,25 +15,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Clonar el repositorio
+      # 1️⃣ Clonar el repo
       - uses: actions/checkout@v4
 
-      # 2️⃣ Instalar Node.js (requerido por Firebase)
+      # 2️⃣ Configurar Node.js compatible con Firebase CLI
       - uses: actions/setup-node@v3
         with:
-          node-version: "18"
+          node-version: 24   # Firebase CLI requiere Node >=20
 
-      # 3️⃣ Desplegar a Firebase Hosting usando la Action oficial
+      # 3️⃣ Deploy a Firebase Hosting
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PIA_PAGINAS_WEB }}
-          projectId: pia-paginas-web       # Cambia esto por tu ID de proyecto
-          channelId: live                  # "live" despliega directamente; para preview usa "main-preview"
-          firebaseToolsVersion: latest
-          disableComment: true             # No genera comentarios en PRs
-          force: true                      # Fuerza el despliegue aunque haya errores menores
-
-      # 4️⃣ Mensaje opcional de confirmación
-      - run: echo "✅ Despliegue completado con éxito"
+          projectId: pia-paginas-web
+          channelId: live       # Puedes usar 'main-preview' si quieres un canal de prueba
+          entryPoint: .         # Carpeta raíz del proyecto
+          force: true
 
