@@ -447,8 +447,19 @@ function verEspecificaciones(id){
     
     new bootstrap.Modal(document.getElementById('modalEspecs')).show();
 }
-function agregarDesdeModal(){ if(celularActual) agregarAlCarrito(celularActual.id); const m=bootstrap.Modal.getInstance(document.getElementById('modalEspecs')); if(m) m.hide(); }
- 
+
+function agregarDesdeModal(){ 
+    if(celularActual) {
+        agregarAlCarrito(
+            celularActual.id,
+            celularActual.imagen_actual,
+            celularActual.colorSeleccionado
+        );
+    } 
+    const m = bootstrap.Modal.getInstance(document.getElementById('modalEspecs')); 
+    if(m) m.hide(); 
+}
+
 /* -- CARRITO DEL AMAZON -- */
 function agregarAlCarrito(id, imagenSel = null, colorSel = null){
   const cel = celulares.find(c => c.id === id); 
