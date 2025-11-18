@@ -39,31 +39,55 @@
 </head>
 <body>
  
-  <!-- NAVBAR -->
-  <nav class="navbar navbar-dark" style="background:#131921;">
-    <div class="container-fluid d-flex align-items-center">
-      <a class="navbar-brand">EIAO CEL</a>
-  
+<!-- NAVBAR -->
+<nav class="navbar navbar-dark" style="background:#131921;">
+  <div class="container-fluid d-flex align-items-center">
+    
+    <!-- LOGO -->
+    <a class="navbar-brand text-white">EIAO CEL</a>
 
-  
+    <!-- CP estilo Amazon -->
+    <div class="cp-box d-flex align-items-center ms-3 me-3">
+      <div class="cp-info me-2">
+        <span class="cp-line1">Enviar a</span>
+        <span class="cp-line2" id="line2">Ingresa tu CP</span>
+      </div>
 
-
- 
-      <form class="d-flex mx-auto w-50" onsubmit="event.preventDefault(); buscar();">
-        <input id="searchInput" class="form-control search-input rounded-start" type="search" placeholder="Buscar productos...">
-        <button class="btn btn-warning rounded-end ms-2" type="button" onclick="buscar()">Buscar</button>
-      </form>
- 
-      <div class="d-flex align-items-center">
-        <a class="nav-link text-white me-3" href="#" onclick="mostrarHistorial()">Pedidos</a>
- 
-        <div class="position-relative text-white fs-4" role="button" onclick="toggleCarritoVisible()">
-          🛒
-          <span id="cart-count" class="badge bg-warning text-dark position-absolute top-0 start-100 translate-middle">0</span>
-        </div>
+      <div class="cp-input d-flex align-items-center">
+        <input type="text" id="cp" placeholder="CP" maxlength="5" oninput="soloNumeros(this)">
+        <button onclick="buscarCP()">OK</button>
       </div>
     </div>
-  </nav>
+
+    <!-- BUSCADOR -->
+    <form class="d-flex mx-auto w-50" onsubmit="event.preventDefault(); buscar();">
+      <input id="searchInput" class="form-control search-input rounded-start" type="search" placeholder="Buscar productos...">
+      <button class="btn btn-warning rounded-end ms-2" type="button" onclick="buscar()">Buscar</button>
+    </form>
+
+    <!-- PEDIDOS + CARRITO -->
+    <div class="d-flex align-items-center ms-3">
+      
+      <a class="nav-link text-white me-3" href="#" onclick="mostrarHistorial()">Pedidos</a>
+
+      <div class="position-relative text-white fs-4" role="button" onclick="toggleCarritoVisible()">
+        🛒
+        <span id="cart-count" class="badge bg-warning text-dark position-absolute top-0 start-100 translate-middle">0</span>
+      </div>
+
+    </div>
+
+  </div>
+</nav>
+
+
+
+
+  
+
+ 
+
+
  
   <!-- CATEGORÍAS -->
   <div class="container my-3">
@@ -428,16 +452,84 @@ function mostrarHistorial(){
   new bootstrap.Modal(document.getElementById('modalHistorial')).show();
 }
 function downloadDataUrl(dataUrl, filename){ const a=document.createElement('a'); a.href=dataUrl; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); }
- 
+
+async function buscarCP() {
+  console.log("FUNCION buscarCP SE EJECUTÓ");
+  const cp = document.getElementById("cp").value;
+
+  if (cp.length !== 5) {
+    alert("El código postal debe tener 5 dígitos");
+    return;
+  }
+
+  try {
+    const res = await fetch(`https://api.zippopotam.us/MX/${cp}`);
+
+    if (!res.ok) {
+      alert("Código postal no encontrado");
+      return;
+    }
+
+    const data = await res.json();
+    const info = data.places[0];
+
+    const estado = info.state;
+    const municipio = info["place name"];
+
+    // Cambiar texto estilo Amazon
+    document.getElementById("line2").textContent =
+      `${municipio}, ${estado}`;
+
+    // Mostrar estado y municipio
+    const estadoElem = document.getElementById("estado");
+    const municipioElem = document.getElementById("municipio");
+
+    if (estadoElem) estadoElem.textContent = "Estado: " + estado;
+    if (municipioElem) municipioElem.textContent = "Municipio: " + municipio;
+
+    // Rellenar colonias
+    const coloniasSelect = document.getElementById("colonias");
+    if (coloniasSelect) {
+      coloniasSelect.innerHTML = "";
+      data.places.forEach(p => {
+        const option = document.createElement("option");
+        option.textContent = p["place name"];
+        coloniasSelect.appendChild(option);
+      });
+    }
+
+  } catch (err) {
+    alert("Error consultando el código postal");
+    console.error(err);
+  }
+}
+
+
+  
+
+
+
+// Permite que solo se ingresen numeros
+function soloNumeros(input){
+  input.value = input.value.replace(/[^0-9]/g, "");
+}
+
+
 /* -- INIT -- */
 function init(){
   initProductos();
   cargarCatalogo();
   cargarCarritoLocal();
 }
+
 init();
  
 </script>
 </body>
-
 </html>
+
+
+
+
+ 
+
