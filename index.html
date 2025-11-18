@@ -454,6 +454,7 @@ function mostrarHistorial(){
 }
 function downloadDataUrl(dataUrl, filename){ const a=document.createElement('a'); a.href=dataUrl; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); }
 
+// Esta función ejecuta la api del codigo postal 
 async function buscarCP() {
   console.log("FUNCION buscarCP SE EJECUTÓ");
   const cp = document.getElementById("cp").value;
