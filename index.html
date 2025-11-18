@@ -450,15 +450,34 @@ function verEspecificaciones(id){
 function agregarDesdeModal(){ if(celularActual) agregarAlCarrito(celularActual.id); const m=bootstrap.Modal.getInstance(document.getElementById('modalEspecs')); if(m) m.hide(); }
  
 /* -- CARRITO DEL AMAZON -- */
-function agregarAlCarrito(id){
-  const cel = celulares.find(c=>c.id===id); if(!cel) return;
-  const existing = carrito.find(i=>i.id===id);
-  if(existing) existing.quantity++;
-  else carrito.push({...cel, quantity:1});
+function agregarAlCarrito(id, imagenSel = null, colorSel = null){
+  const cel = celulares.find(c => c.id === id); 
+  if(!cel) return;
+
+  const imagenACrear = imagenSel || (celularActual && celularActual.imagen_actual) || cel.imagen;
+  const colorACrear  = colorSel  || (celularActual && celularActual.colorSeleccionado) || 'default';
+
+  const existing = carrito.find(i => 
+    i.id === id && (i.color || 'default') === colorACrear
+  );
+
+  if(existing){
+    existing.quantity++;
+    existing.imagen = imagenACrear;
+  } else {
+    carrito.push({
+      ...cel, 
+      quantity: 1,
+      color: colorACrear,
+      imagen: imagenACrear
+    });
+  }
+
   actualizarCarrito();
   guardarCarritoLocal();
-  mostrarToast(`${cel.nombre} agregado al carrito`);
+  mostrarToast(`${cel.nombre} (${colorACrear}) agregado al carrito`);
 }
+
 function actualizarCarrito(){
   const lista = document.getElementById('lista-carrito');
   const totalEl = document.getElementById('total');
