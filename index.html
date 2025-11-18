@@ -6,13 +6,8 @@
   <title>EIAO Celulares</title>
   <link rel="stylesheet" href="pagina.css"
  
-  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script> <!-- si ocupas login -->
-<p>hola mundo</p>
-
-
-  <!-- Bootstrap -->
+  Bootstrap -->
+  
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
  
@@ -21,7 +16,7 @@
  
   <style>
     body { font-family: Arial, sans-serif; background:#f2f2f2; margin:0; padding:0; }
-    .navbar-brand { color: #34455ec4;  font-weight:700; font-size:1.4rem; }
+    .navbar-brand { color: #b7c913c4;  font-weight:700; font-size:1.4rem; }
     .search-input { width:100%; max-width:720px; }
  
     /* Cards */
@@ -41,12 +36,33 @@
     /* toast */
     .toast-custom { animation: fadeInOut 2s ease forwards; position:fixed; right:20px; top:20px; z-index:2200; background:#4caf50; color:#fff; padding:12px 16px; border-radius:8px; font-weight:600; }
     @keyframes fadeInOut { 0%{opacity:0;transform:translateY(-10px)}10%{opacity:1;transform:translateY(0)}90%{opacity:1}100%{opacity:0;transform:translateY(-10px)} }
+    .color-swatch {
+        /* Le da tamaño (30x30px) y lo hace circular (50% de radio) */
+        width: 30px; 
+        height: 30px; 
+        border-radius: 70%; 
+        
+        cursor: pointer;
+        padding: 0;
+        
+        /* Estilo del borde y sombra (se ve transparente si no está activo) */
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2); 
+    }
+
+    /* Estilo para el color activo/seleccionado */
+    .color-swatch:hover, .color-swatch.activo {
+        border-color: #34455ec4; /
+        transform: scale(1.1); /* Hace que el botón crezca un poco */
+        box-shadow: 0 2px 5px rgba(52, 69, 94, 0.4);
+    }
   </style>
 </head>
 <body>
  
 <!-- NAVBAR -->
-<nav class="navbar navbar-dark" style="background:#131921;">
+<nav class="navbar navbar-dark" style="background:#06090e;">
   <div class="container-fluid d-flex align-items-center">
     
     <!-- LOGO -->
@@ -85,6 +101,7 @@
 
   </div>
 </nav>
+
 
 
 
@@ -130,26 +147,27 @@
   </div>
  
   <!-- MODAL ESPECIFICACIONES -->
-  <div class="modal fade" id="modalEspecs" tabindex="-1">
+ <div class="modal fade" id="modalEspecs" tabindex="-1">
     <div class="modal-dialog modal-dialog-scrollable">
+
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="modal-titulo"></h5>
           <button class="btn-close" data-bs-dismiss="modal"></button>
         </div>
+        
         <div class="modal-body text-center">
-          <img id="modal-imagen" class="img-fluid mb-3 rounded" style="max-width:200px;">
-          <p id="modal-precio" class="text-danger fw-bold fs-4"></p>
-          <ul id="modal-especs" class="list-group text-start"></ul>
+    <img id="modal-imagen" class="img-fluid mb-3 rounded" style="max-width:200px;">
+    <p id="modal-precio" class="text-danger fw-bold fs-4"></p>
+    
+    <div class="mb-3"> 
+        <p class="fw-bold mb-2"> Otro color disponible:<span id="color-seleccionado"></span></p>
+        <p>clic en el circulo para ver</p> 
+        <div id="modal-colores" class="d-flex justify-content-center gap-2">
         </div>
-        <div class="modal-footer">
-          <button class="btn btn-warning" onclick="agregarDesdeModal()">Agregar al Carrito</button>
-          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
-        </div>
-      </div>
     </div>
-  </div>
-  
+    <ul id="modal-especs" class="list-group text-start"></ul>
+</div>
  
   <!-- MODAL HISTORIAL -->
   <div class="modal fade" id="modalHistorial" tabindex="-1">
@@ -179,6 +197,7 @@
       <hr class="border-secondary">
       <small>&copy; 2025 EIAO Celulares</small>
     </div>
+
   </footer>
  
 <script>
@@ -197,6 +216,12 @@ function initProductos(){
       nombre:"Realme gt6",
       precio:13999,
       imagen:"https://storage.comprasmartphone.com/smartphones/realme-gt6.png",
+      Colores:{
+        color1:{name:"verde", src:"imagenes/variantes de imagenes/realme verde.png"
+
+        }
+
+      },
       categoria:"Realme",
       marca:"Realme",
       specs:[
@@ -214,6 +239,14 @@ function initProductos(){
       precio:15999,
       imagen:"imagenes/one plus pro.jpg",
 
+      Colores:{
+        color1:{name:"rojo", src:"imagenes/variantes de imagenes/one plus rojo.jpg"
+
+        }
+
+
+      },
+
       categoria:"media",
       marca:"OnePlus",
       specs:[
@@ -229,6 +262,12 @@ function initProductos(){
       nombre:"Sony Xperia 5 V",
       precio:21499,
       imagen:"imagenes/sono xperia 5 v.png",
+      Colores:{
+        color1:{name:"azul", src:"imagenes/variantes de imagenes/sony azul.jpg"
+
+        }
+
+      },
       categoria:"tope",
       marca:"Sony",
       specs:[
@@ -244,8 +283,15 @@ function initProductos(){
       nombre:"Honor Magic Pro",
       precio:19499,
       imagen:"imagenes/honor magic pro.webp",
+      Colores:{
+        color1:{name:"verde", src:"imagenes/variantes de imagenes/honor verde.jpg"
+
+        }
+
+      },
       categoria:"media",
       marca:"Honor",
+
       specs:[
         "Pantalla: 6.8\" OLED 120Hz",
         "Procesador: Snapdragon 8 Gen 3",
@@ -259,6 +305,12 @@ function initProductos(){
       nombre:"Oppo Find X7 Pro",
       precio:23999,
       imagen:"imagenes/oppo find x7.png",
+      Colores:{
+        color1:{name:"morado", src:"imagenes/variantes de imagenes/oppo morado.jpg"
+
+        }
+
+      },
       categoria:"tope",
       marca:"Oppo",
       specs:[
@@ -286,6 +338,7 @@ function cargarCatalogo(){
           <div class="card-body d-flex flex-column">
             <h5 class="card-title">${cel.nombre}</h5>
             <p class="text-danger fw-bold">$${cel.precio.toLocaleString()} MXN</p>
+
             <div class="mt-auto">
               <button class="btn btn-primary btn-sm me-2" onclick="verEspecificaciones('${cel.id}')">Especificaciones</button>
               <button class="btn btn-warning btn-sm" onclick="agregarAlCarrito('${cel.id}')">Agregar</button>
@@ -332,17 +385,67 @@ function buscar(){
   });
 }
  
+
+
 /* -- MODAL ESPECIFICACIONES DEL CELULAR -- */
 function verEspecificaciones(id){
-  console.log('verEspecificaciones click:', id); // debug
-  const cel = celulares.find(c=>c.id===id); if(!cel) return;
-  celularActual = cel;
-  document.getElementById('modal-titulo').textContent = cel.nombre;
-  document.getElementById('modal-imagen').src = cel.imagen;
-  document.getElementById('modal-precio').textContent = `$${cel.precio.toLocaleString()} MXN`;
-  const lista = document.getElementById('modal-especs'); lista.innerHTML = '';
-  cel.specs.forEach(s=>{ const li=document.createElement('li'); li.className='list-group-item'; li.textContent=s; lista.appendChild(li); });
-  new bootstrap.Modal(document.getElementById('modalEspecs')).show();
+    const cel = celulares.find(c=>c.id===id); 
+    if(!cel) return;
+    
+    // Inicializa el objeto temporal 'celularActual' con la imagen por defecto
+    celularActual = {...cel, imagen_actual: cel.imagen}; 
+
+    document.getElementById('modal-titulo').textContent = cel.nombre;
+    
+    // Muestra la imagen por defecto
+    const imagenSrc = celularActual.imagen_actual; 
+    document.getElementById('modal-imagen').src = imagenSrc;
+
+    document.getElementById('modal-precio').textContent = `$${cel.precio.toLocaleString()} MXN`;
+    document.getElementById('color-seleccionado').textContent = cel.Colores ? cel.Colores.color1.name : "N/A";
+    
+    // LÓGICA DE COLORES USANDO 'Colores' 
+    const coloresEl = document.getElementById('modal-colores');
+    coloresEl.innerHTML = ''; 
+
+    if (cel.Colores) { // <-- ¡Lee la propiedad Colores!
+        for (const key in cel.Colores) { 
+            const variante = cel.Colores[key]; // Accede a { name, src }
+
+            const button = document.createElement('button');
+            button.className = 'btn btn-sm color-swatch';
+            
+            // Usa el valor del campo 'name' para pintar el fondo del botón
+            button.style.backgroundColor = variante.name; 
+            button.title = variante.name; 
+            
+            // Marca el color por defecto (el que coincide con 'imagen') como activo
+            if (variante.src === cel.imagen) { 
+                button.classList.add('activo');
+            }
+            
+            // Asigna el evento click
+            button.onclick = (e) => cambiarImagenModal(variante.name, variante.src, e.currentTarget);
+            
+            coloresEl.appendChild(button);
+        }
+    }
+    
+    // Oculta/Muestra el contenedor de colores
+
+    coloresEl.style.display = cel.Colores ? 'flex' : 'none'; 
+    // --- FIN LÓGICA DE COLORES ---
+
+    const lista = document.getElementById('modal-especs'); 
+    lista.innerHTML = '';
+    cel.specs.forEach(s=>{ 
+      const li=document.createElement('li'); 
+      li.className='list-group-item'; 
+      li.textContent=s; 
+      lista.appendChild(li); 
+    });
+    
+    new bootstrap.Modal(document.getElementById('modalEspecs')).show();
 }
 function agregarDesdeModal(){ if(celularActual) agregarAlCarrito(celularActual.id); const m=bootstrap.Modal.getInstance(document.getElementById('modalEspecs')); if(m) m.hide(); }
  
@@ -422,6 +525,7 @@ function procederAlPago(){
  
   // Mensaje de agradecimiento
   y+=18; doc.setFontSize(14); doc.text('¡Gracias por su compra!', doc.internal.pageSize.getWidth()/2, y, {align:'center'});
+
   y+=8; doc.setFontSize(11); doc.text('Esperamos que disfrute su producto.', doc.internal.pageSize.getWidth()/2, y, {align:'center'});
  
   // guardar ticket en LocalStorage
@@ -462,11 +566,13 @@ function mostrarHistorial(){
 function downloadDataUrl(dataUrl, filename){ const a=document.createElement('a'); a.href=dataUrl; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); }
 
 // Esta función ejecuta la api del codigo postal 
-async function buscarCP() {
+async function buscarCP() 
+{
   console.log("FUNCION buscarCP SE EJECUTÓ");
   const cp = document.getElementById("cp").value;
 
   if (cp.length !== 5) {
+
     alert("El código postal debe tener 5 dígitos");
     return;
   }
@@ -511,11 +617,37 @@ async function buscarCP() {
     alert("Error consultando el código postal");
     console.error(err);
   }
-}
-
-
   
 
+
+}
+
+function cambiarImagenModal(color, nuevaRuta, swatchElement) 
+{
+    // 1. Cambia la imagen principal del modal
+    document.getElementById('modal-imagen').src = nuevaRuta;
+    
+    // 2. Resalta el botón de color seleccionado
+    const contenedor = document.getElementById('modal-colores');
+    contenedor.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('activo'));
+    swatchElement.classList.add('activo');
+    document.getElementById('color-seleccionado').textContent = color;
+
+    // 3. Guarda la imagen seleccionada temporalmente en el objeto celular para el carrito
+    if (celularActual) {
+        celularActual.imagen_actual = nuevaRuta; 
+    }
+}
+ // 2.Función modificada para agregar desde el Modal
+
+function agregarDesdeModal(){ 
+    if(celularActual) {
+        // Pasa la imagen seleccionada (celularActual.imagen_actual) a agregarAlCarrito
+        agregarAlCarrito(celularActual.id, celularActual.imagen_actual);
+    } 
+    const m=bootstrap.Modal.getInstance(document.getElementById('modalEspecs')); 
+    if(m) m.hide(); 
+}
 
 
 // Permite que solo se ingresen numeros
@@ -534,6 +666,7 @@ function init(){
 init();
  
 </script>
+
 </body>
 </html>
 
@@ -541,4 +674,6 @@ init();
 
 
  
+
+
 
